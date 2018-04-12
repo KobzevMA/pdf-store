@@ -93,10 +93,15 @@ if __name__ == '__main__':
     redacted_file = unparsed[:availible_string_position]
 
     for block in information_by_blocks:
-        availible_field_position = availible_string_position + 13 #find position in string, where data will write
+        availible_field_position = availible_string_position + 12 #find position in string, where data will write
         redacted_file += unparsed[availible_string_position:availible_field_position] #copy unnecessary data from main file
         redacted_file += make_byte_data(block)
+        availible_string_position = unparsed.find(b'\x0a',  availible_field_position)
+        redacted_file += unparsed[availible_field_position+5:availible_string_position] #copy remaining data
 
+    redacted_file += unparsed[availible_string_position:]
 
-    print(unparsed[availible_string_position:])
+    with open(file, 'wb') as f:
+        f.write(redacted_file)
+
 
