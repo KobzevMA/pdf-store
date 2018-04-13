@@ -30,10 +30,22 @@ def make_byte_data(block):
     return byte_block
 
 if __name__ == '__main__':
-    #file = input('Path for container-file: ')
-    file = 'c:\\Users\\Mike\\Downloads\\ETSP.pdf'
-    with open(file, 'rb') as f:
-        unparsed = f.read()
+    file = input('Path for container-file: ')
+    #file = 'c:\\Users\\Mike\\Downloads\\ETSP.pdf'
+    i = len(file) - 1  # extracting extension of file with information
+    while file[i] != '.':
+        i -= 1
+    pdf_exstension = file[i + 1:]
+
+    if pdf_exstension != 'pdf':
+        print('invelid type of file. Use pdf.')
+        exit()
+    try:
+        with open(file, 'rb') as f:
+            unparsed = f.read()
+    except(FileNotFoundError):
+        print('there is no such file.')
+        exit()
 
     #c:\Users\Mike\Downloads\ETSP.pdf
     xref_signature = b'\x78\x72\x65\x66\x0d\x0a' #xref \r \n
@@ -46,10 +58,14 @@ if __name__ == '__main__':
         print('free capasity - %d bite' %(size_for_hide*16 - 20)) #20 bit - addition to save the exstension of file
 
 
-    #file = input('Path for file with data: ')
-    file = 'c:\\Users\\Mike\\Downloads\\text.txt'
-    with open(file, 'rb') as f:
-        unparsed_information = f.read()
+    inf_file = input('Path for file with data: ')
+    #inf_file = 'c:\\Users\\Mike\\Downloads\\text.txt'
+    try:
+        with open(inf_file, 'rb') as f:
+            unparsed_information = f.read()
+    except(FileNotFoundError):
+        print('there is no such file.')
+        exit()
 
     information_to_hide = bin(int.from_bytes(unparsed_information, byteorder='big'))
     information_to_hide = information_to_hide[2:]
@@ -65,10 +81,10 @@ if __name__ == '__main__':
     information_by_blocks.append(information_size)  #adding size of hidden information
 
     #number up to 65535 - 16 bit information in every string of pdf xref table
-    i = len(file)-1 #extracting extension of file
-    while file[i] != '.':
+    i = len(inf_file)-1 #extracting extension of file with information
+    while inf_file[i] != '.':
         i-=1
-    exstension = file[i+1:]
+    exstension = inf_file[i+1:]
 
     exstension_as_bin = '' #encode exstension in binary
     for symbol in exstension:
@@ -81,12 +97,14 @@ if __name__ == '__main__':
         exstension_as_bin = exstension_as_bin + '1'*5 #add a special mark - '11111'
     information_to_hide = exstension_as_bin + information_to_hide #adding exstension of file to information
 
-    #information for write has a format - signature(1 str) + size(1str) + exstension(20bit) + file itself
+    #information for write now has a format - signature(1 str) + size(1str) + exstension(20bit) + file itself
     block_begin = 0
     while block_begin < len(information_to_hide):
         block_end = min(block_begin+16,len(information_to_hide))
         information_by_blocks.append(information_to_hide[block_begin:block_end])
         block_begin += 16
+    if len(information_by_blocks[len(information_by_blocks)-1]) < 16:
+        information_by_blocks[len(information_by_blocks) - 1] = information_by_blocks[len(information_by_blocks) - 1] + '0'*(16-len(information_by_blocks[len(information_by_blocks)-1]))
 
     reserved_field_position = unparsed.find(b'\x0a', xref_position + 6) #find reserved string
     availible_string_position = unparsed.find(b'\x0a', reserved_field_position + 1) #find next string - first string, which can accept data
